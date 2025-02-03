@@ -35,3 +35,10 @@ test("Increment buttonをクリックするとカウントが1増える", async 
   expect(linkElement).toBeInTheDocument();
 });
 
+test("Decrement buttonをクリックするとカウントが1減る", async () => {
+  render(<App />);
+  const decrementButton = screen.getByText("Decrement");
+  userEvent.click(decrementButton);
+  const linkElement = await screen.findByText("-1");
+  expect(linkElement).toBeInTheDocument();
+});
