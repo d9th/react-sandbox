@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from "react";
 
 function App() {
   return (
@@ -17,7 +17,7 @@ const Headline = () => {
   return <h1>My App</h1>;
 };
 
-const CounterNumber = ({children}: { children: ReactNode }) => {
+const CounterNumber = ({ children }: { children: ReactNode }) => {
   return <h2>{children}</h2>;
 };
 
