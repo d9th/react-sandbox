@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom";
 import "@testing-library/dom";
-import { render, screen, cleanup} from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {afterEach, expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import App from "../App";
 
 afterEach(() => {
@@ -30,7 +30,7 @@ test("App has counter number", () => {
 test("Increment buttonをクリックするとカウントが1増える", async () => {
   render(<App />);
   const incrementButton = screen.getByText("Increment");
-  userEvent.click(incrementButton);
+  await userEvent.click(incrementButton);
   const linkElement = await screen.findByText("1");
   expect(linkElement).toBeInTheDocument();
 });
@@ -38,7 +38,7 @@ test("Increment buttonをクリックするとカウントが1増える", async 
 test("Decrement buttonをクリックするとカウントが1減る", async () => {
   render(<App />);
   const decrementButton = screen.getByText("Decrement");
-  userEvent.click(decrementButton);
+  await userEvent.click(decrementButton);
   const linkElement = await screen.findByText("-1");
   expect(linkElement).toBeInTheDocument();
 });

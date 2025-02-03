@@ -16,12 +16,14 @@ const Section = ({ children }: { children: ReactNode }) => {
 
 const Headline = () => {
   return (
-    <>
-      <h1 className="text-5xl font-light">react sandbox</h1>
-      <h2 className="text-3xl font-light">
-        React & TS & Biome & vite & vitest & playwright
-      </h2>
-    </>
+    <div className="navbar">
+      <div>
+        <h1 className="text-5xl font-bold">react sandbox</h1>
+        <h2 className="text-lg font-light">
+          React & TS & tailwind & daisyUI & Biome & vite & vitest & playwright
+        </h2>
+      </div>
+    </div>
   );
 };
 
@@ -64,12 +66,18 @@ const Counter = () => {
         >
           Increment
         </button>
+        <button className="btn btn-secondary" onClick={() => setCount(0)}>
+          Reset
+        </button>
       </ButtonSection>
     </div>
   );
 };
 
-// TODO: button componentを作成する
+// reset buttonを作成する
+// stateをリセットするため関数を引数として受け取る
+
+// TODO: buttonのコードが重複するのでcomponent化する事
 // const Button = () => {};
 
 export default App;
