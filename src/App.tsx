@@ -14,11 +14,22 @@ const Section = ({ children }: { children: ReactNode }) => {
 };
 
 const Headline = () => {
-  return <h1>My App</h1>;
+  return (
+    <>
+      <h1>react sandbox</h1>
+      <h2>React & TS & Biome & vite & vitest & playwright</h2>
+    </>
+  );
 };
 
 const CounterNumber = ({ children }: { children: ReactNode }) => {
-  return <h2>{children}</h2>;
+  return (
+    <div>
+      <h3>
+        Counter: <code>{children}</code>
+      </h3>
+    </div>
+  );
 };
 
 const ButtonSection = ({ children }: { children: ReactNode }) => {
