@@ -1,16 +1,18 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test('has title', async ({ page }) => {
-  await page.goto('http://localhost:5173');
-
-  // Expect a title "to contain" a substring.
-  await expect(page.getByRole('heading', { name: 'My App' })).toBeVisible();
+test("h1のテキストが存在する事", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "My App" })).toBeVisible();
 });
 
-test.skip('get started link', async ({ page }) => {
-  await page.goto('http://localhost:5173');
-  // Click the get started link.
-  await page.getByRole('button', { name: 'increment' }).click();
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: '0' })).toBeVisible();
+test("increment buttonをクリックするとカウント数が1増える事", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "increment" }).click();
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("1");
+});
+
+test("decrement buttonをクリックするとカウント数が1減る事", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "decrement" }).click();
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText('-1');
 });
