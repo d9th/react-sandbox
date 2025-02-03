@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import "./index.css";
 
 function App() {
   return (
@@ -10,30 +11,36 @@ function App() {
 }
 
 const Section = ({ children }: { children: ReactNode }) => {
-  return <div>{children}</div>;
+  return <div className="m-8 space-y-4">{children}</div>;
 };
 
 const Headline = () => {
   return (
     <>
-      <h1>react sandbox</h1>
-      <h2>React & TS & Biome & vite & vitest & playwright</h2>
+      <h1 className="text-5xl font-light">react sandbox</h1>
+      <h2 className="text-3xl font-light">
+        React & TS & Biome & vite & vitest & playwright
+      </h2>
     </>
   );
 };
 
 const CounterNumber = ({ children }: { children: ReactNode }) => {
   return (
-    <div>
-      <h3>
-        Counter: <code>{children}</code>
-      </h3>
+    <div className="stats shadow">
+      <div className="stat">
+        <h3 className="stat-title">Total count</h3>
+        <div>
+          <code className="stat-value">{children}</code>
+        </div>
+        <div className="stat-desc">foo bar foobar</div>
+      </div>
     </div>
   );
 };
 
 const ButtonSection = ({ children }: { children: ReactNode }) => {
-  return <div>{children}</div>;
+  return <div className="space-x-4">{children}</div>;
 };
 
 // Counter sample
@@ -42,14 +49,27 @@ const ButtonSection = ({ children }: { children: ReactNode }) => {
 const Counter = () => {
   const [count, setCount] = useState<number>(0);
   return (
-    <>
+    <div className="space-y-4">
       <CounterNumber>{count}</CounterNumber>
       <ButtonSection>
-        <button onClick={() => setCount(c => c - 1)}>Decrement</button>
-        <button onClick={() => setCount(c => c + 1)}>Increment</button>
+        <button
+          className="btn btn-primary"
+          onClick={() => setCount(c => c - 1)}
+        >
+          Decrement
+        </button>
+        <button
+          className="btn btn-neutral"
+          onClick={() => setCount(c => c + 1)}
+        >
+          Increment
+        </button>
       </ButtonSection>
-    </>
+    </div>
   );
 };
+
+// TODO: button componentを作成する
+// const Button = () => {};
 
 export default App;
