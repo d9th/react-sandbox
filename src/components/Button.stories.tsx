@@ -16,9 +16,9 @@ export const Default: Story = {
   },
 };
 
-export const Primary: Story = {
+export const WithShadow: Story = {
   args: {
-    children: "Example Button",
-    className: "btn-primary",
+    children: <span>Example Button</span>,
+    className: "",
   },
 };

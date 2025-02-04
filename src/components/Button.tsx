@@ -3,7 +3,7 @@ import "../index.css";
 
 type Props = ComponentPropsWithoutRef<"button">;
 
-const defaultClassName = "btn";
+const defaultClassName = "btn shadow";
 
 const Button = (props: Props) => {
   const { children } = props;
