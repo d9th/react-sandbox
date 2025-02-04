@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import Button from "./components/Button";
 import "./index.css";
 
 function App() {
@@ -54,39 +55,17 @@ const Counter = () => {
     <div className="space-y-4">
       <CounterNumber>{count}</CounterNumber>
       <ButtonSection>
-        <button
-          className="btn btn-neutral"
-          onClick={() => setCount(c => c + 1)}
-        >
+        <Button className="btn-neutral" onClick={() => setCount(c => c + 1)}>
           Increment
-        </button>
-        <button
-          className="btn btn-neutral"
-          onClick={() => setCount(c => c - 1)}
-        >
+        </Button>
+        <Button className="btn-neutral" onClick={() => setCount(c => c - 1)}>
           Decrement
-        </button>
-        <button className="btn btn-secondary" onClick={() => setCount(0)}>
+        </Button>
+        <Button className="btn-secondary" onClick={() => setCount(0)}>
           Reset
-        </button>
+        </Button>
       </ButtonSection>
     </div>
-  );
-};
-
-// TODO: buttonのコードが重複するのでcomponent化する事
-type ButtonProps = {
-  onClick: () => void;
-  children: ReactNode;
-  className: string;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const Button: React.FC<ButtonProps> = ({ onClick, children, className }) => {
-  return (
-    <button className={className} onClick={onClick}>
-      {children}
-    </button>
   );
 };
 
