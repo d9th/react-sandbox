@@ -26,6 +26,7 @@
   },
   "include": [
     "src",
+    ".storybook/*.ts"
     // "e2e"
   ]
 }

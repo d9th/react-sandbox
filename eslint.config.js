@@ -20,7 +20,7 @@ export default tseslint.config(
       js.configs.recommended,
       ...tseslint.configs.recommendedTypeChecked,
     ],
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx}', ".storybook/*.ts"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,

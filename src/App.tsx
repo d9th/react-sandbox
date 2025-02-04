@@ -81,6 +81,7 @@ type ButtonProps = {
   className: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Button: React.FC<ButtonProps> = ({ onClick, children, className }) => {
   return (
     <button className={className} onClick={onClick}>
