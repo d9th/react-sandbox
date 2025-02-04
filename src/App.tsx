@@ -29,7 +29,7 @@ const Headline = () => {
 
 const CounterNumber = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="stats shadow">
+    <div className="stats shadow bg-base-300">
       <div className="stat">
         <h3 className="stat-title">Total count</h3>
         <div>
@@ -55,16 +55,16 @@ const Counter = () => {
       <CounterNumber>{count}</CounterNumber>
       <ButtonSection>
         <button
-          className="btn btn-primary"
-          onClick={() => setCount(c => c - 1)}
-        >
-          Decrement
-        </button>
-        <button
           className="btn btn-neutral"
           onClick={() => setCount(c => c + 1)}
         >
           Increment
+        </button>
+        <button
+          className="btn btn-neutral"
+          onClick={() => setCount(c => c - 1)}
+        >
+          Decrement
         </button>
         <button className="btn btn-secondary" onClick={() => setCount(0)}>
           Reset
@@ -74,10 +74,19 @@ const Counter = () => {
   );
 };
 
-// reset buttonを作成する
-// stateをリセットするため関数を引数として受け取る
-
 // TODO: buttonのコードが重複するのでcomponent化する事
-// const Button = () => {};
+type ButtonProps = {
+  onClick: () => void;
+  children: ReactNode;
+  className: string;
+};
+
+const Button: React.FC<ButtonProps> = ({ onClick, children, className }) => {
+  return (
+    <button className={className} onClick={onClick}>
+      {children}
+    </button>
+  );
+};
 
 export default App;
