@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from "react";
 import Button from "./components/Button";
 import "./index.css";
+import { SampleReducer } from "./components/SampleReducer";
 
 function App() {
   return (
     <Section>
       <Headline />
       <Counter />
+      <SampleReducer />
     </Section>
   );
 }
@@ -30,7 +32,7 @@ const Headline = () => {
 
 const CounterNumber = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="stats shadow bg-base-300">
+    <div className="stats shadow-md border border-primary bg-base-300">
       <div className="stat">
         <h3 className="stat-title">Total count</h3>
         <div>
