@@ -15,9 +15,18 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.3",
+    "@tanstack/react-query": "^5.66.11",
+    "@turf/turf": "^7.2.0",
+    "clsx": "^2.1.1",
+    "mapbox-gl": "^3.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^4.0.3"
+    "react-error-boundary": "^5.0.0",
+    "react-hook-form": "^7.54.2",
+    "react-loading-skeleton": "^3.5.0",
+    "swr": "^2.3.2",
+    "tailwindcss": "^4.0.3",
+    "wretch": "^2.11.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -35,6 +44,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^22.13.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -47,6 +57,7 @@
     "eslint-plugin-storybook": "^0.11.2",
     "globals": "^15.14.0",
     "jsdom": "^26.0.0",
+    "msw": "^2.7.3",
     "storybook": "^8.5.3",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
