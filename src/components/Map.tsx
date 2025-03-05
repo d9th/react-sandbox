@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useReducer } from "react";
 import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
 import type { LngLatLike } from "mapbox-gl";
@@ -7,6 +7,48 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_API as string;
 const INITIAL_CENTER: LngLatLike = [139.767, 35.6814];
+
+type LayerState = {
+  isochroneLayer: string | null;
+  supermarketLayer: string | null;
+  bentoLayer: string | null;
+  convenienceStoreLayer: string | null;
+  coffeeLayer: string | null;
+  pediatricLayer: string | null;
+  kindergartenLayer: string | null;
+  dryCleaningLayer: string | null;
+  gymLayer: string | null;
+  parkLayer: string | null;
+};
+
+type LayerAction =
+  | { type: "SET_LAYER"; layerType: keyof LayerState; layerId: string }
+  | { type: "REMOVE_LAYER"; layerType: keyof LayerState }
+  | { type: "REMOVE_ALL_LAYERS" };
+
+const layerReducer = (state: LayerState, action: LayerAction): LayerState => {
+  switch (action.type) {
+    case "SET_LAYER":
+      return { ...state, [action.layerType]: action.layerId };
+    case "REMOVE_LAYER":
+      return { ...state, [action.layerType]: null };
+    case "REMOVE_ALL_LAYERS":
+      return {
+        isochroneLayer: null,
+        supermarketLayer: null,
+        bentoLayer: null,
+        convenienceStoreLayer: null,
+        coffeeLayer: null,
+        pediatricLayer: null,
+        kindergartenLayer: null,
+        dryCleaningLayer: null,
+        gymLayer: null,
+        parkLayer: null,
+      };
+    default:
+      return state;
+  }
+};
 
 const Map = () => {
   mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -18,23 +60,20 @@ const Map = () => {
   const [markerPosition, setMarkerPosition] =
     useState<[number, number]>(INITIAL_CENTER);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const [isochroneLayer, setIsochroneLayer] = useState<string | null>(null);
-  const [bboxLayer, setBboxLayer] = useState<string | null>(null);
-  const [supermarketLayer, setSupermarketLayer] = useState<string | null>(null);
-  const [bentoLayer, setBentoLayer] = useState<string | null>(null);
-  const [convenienceStoreLayer, setConvenienceStoreLayer] = useState<
-    string | null
-  >(null);
-  const [coffeeLayer, setCoffeeLayer] = useState<string | null>(null);
-  const [pediatricLayer, setPediatricLayer] = useState<string | null>(null);
-  const [kindergartenLayer, setKindergartenLayer] = useState<string | null>(
-    null,
-  );
-  const [dryCleaningLayer, setDryCleaningLayer] = useState<string | null>(null);
-  const [gymLayer, setGymLayer] = useState<string | null>(null);
-  const [parkLayer, setParkLayer] = useState<string | null>(null);
   const [walkTime, setWalkTime] = useState<number>(10);
   const [poiCounts, setPoiCounts] = useState<{ [key: string]: number }>({});
+  const [layerState, dispatch] = useReducer(layerReducer, {
+    isochroneLayer: null,
+    supermarketLayer: null,
+    bentoLayer: null,
+    convenienceStoreLayer: null,
+    coffeeLayer: null,
+    pediatricLayer: null,
+    kindergartenLayer: null,
+    dryCleaningLayer: null,
+    gymLayer: null,
+    parkLayer: null,
+  });
 
   useEffect(() => {
     if (mapContainerRef.current) {
@@ -59,6 +98,8 @@ const Map = () => {
 
       const fullscreenControl = new mapboxgl.FullscreenControl();
       mapRef.current.addControl(fullscreenControl, "top-left");
+
+      mapRef.current.on("click", handleMapClick);
     }
     return () => {
       mapRef.current?.remove();
@@ -74,12 +115,12 @@ const Map = () => {
 
       if (!mapRef.current) return;
 
-      if (isochroneLayer) {
-        if (mapRef.current.getLayer(isochroneLayer)) {
-          mapRef.current.removeLayer(isochroneLayer);
+      if (layerState.isochroneLayer) {
+        if (mapRef.current.getLayer(layerState.isochroneLayer)) {
+          mapRef.current.removeLayer(layerState.isochroneLayer);
         }
-        if (mapRef.current.getSource(isochroneLayer)) {
-          mapRef.current.removeSource(isochroneLayer);
+        if (mapRef.current.getSource(layerState.isochroneLayer)) {
+          mapRef.current.removeSource(layerState.isochroneLayer);
         }
       }
       const newLayerId = `isochrone-layer`;
@@ -104,56 +145,13 @@ const Map = () => {
         },
       });
 
-      setIsochroneLayer(newLayerId);
+      dispatch({
+        type: "SET_LAYER",
+        layerType: "isochroneLayer",
+        layerId: newLayerId,
+      });
 
-      // bboxを計算して表示する
       const bbox = turf.bbox(data);
-      if (bboxLayer) {
-        if (mapRef.current.getLayer(bboxLayer)) {
-          mapRef.current.removeLayer(bboxLayer);
-        }
-        if (mapRef.current.getSource(bboxLayer)) {
-          mapRef.current.removeSource(bboxLayer);
-        }
-      }
-      const newBboxLayerId = `bbox-layer`;
-      if (mapRef.current.getLayer(newBboxLayerId)) {
-        mapRef.current.removeLayer(newBboxLayerId);
-      }
-      if (mapRef.current.getSource(newBboxLayerId)) {
-        mapRef.current.removeSource(newBboxLayerId);
-      }
-      mapRef.current.addSource(newBboxLayerId, {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          geometry: {
-            type: "Polygon",
-            coordinates: [
-              [
-                [bbox[0], bbox[1]],
-                [bbox[2], bbox[1]],
-                [bbox[2], bbox[3]],
-                [bbox[0], bbox[3]],
-                [bbox[0], bbox[1]],
-              ],
-            ],
-          },
-          properties: {},
-        },
-      });
-
-      mapRef.current.addLayer({
-        id: newBboxLayerId,
-        type: "line",
-        source: newBboxLayerId,
-        paint: {
-          "line-color": "#f00",
-          "line-width": 2,
-        },
-      });
-
-      setBboxLayer(newBboxLayerId);
 
       const categories = [
         "ショップ>スーパー",
@@ -178,421 +176,32 @@ const Map = () => {
         console.log(`${category} Data:`, categoryData);
         newPoiCounts[category] = categoryData.features.length;
 
-        if (category === "レストラン>カフェ") {
-          if (coffeeLayer) {
-            if (mapRef.current.getLayer(coffeeLayer)) {
-              mapRef.current.removeLayer(coffeeLayer);
-              mapRef.current.removeLayer(`${coffeeLayer}-label`);
-            }
-            if (mapRef.current.getSource(coffeeLayer)) {
-              mapRef.current.removeSource(coffeeLayer);
-            }
-          }
-          const newCoffeeLayerId = `coffee-layer`;
-          if (mapRef.current.getLayer(newCoffeeLayerId)) {
-            mapRef.current.removeLayer(newCoffeeLayerId);
-            mapRef.current.removeLayer(`${newCoffeeLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newCoffeeLayerId)) {
-            mapRef.current.removeSource(newCoffeeLayerId);
-          }
-          mapRef.current.addSource(newCoffeeLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
+        const layerType = category.split(">")[1] as keyof LayerState;
+        const layerId = `${layerType}-layer`;
 
-          mapRef.current.addLayer({
-            id: newCoffeeLayerId,
-            type: "circle",
-            source: newCoffeeLayerId,
-            paint: {
-              "circle-color": "#00f",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newCoffeeLayerId}-label`,
-            type: "symbol",
-            source: newCoffeeLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setCoffeeLayer(newCoffeeLayerId);
-        } else if (category === "医療>小児科") {
-          if (pediatricLayer) {
-            if (mapRef.current.getLayer(pediatricLayer)) {
-              mapRef.current.removeLayer(pediatricLayer);
-              mapRef.current.removeLayer(`${pediatricLayer}-label`);
-            }
-            if (mapRef.current.getSource(pediatricLayer)) {
-              mapRef.current.removeSource(pediatricLayer);
-            }
-          }
-          const newPediatricLayerId = `pediatric-layer`;
-          if (mapRef.current.getLayer(newPediatricLayerId)) {
-            mapRef.current.removeLayer(newPediatricLayerId);
-            mapRef.current.removeLayer(`${newPediatricLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newPediatricLayerId)) {
-            mapRef.current.removeSource(newPediatricLayerId);
-          }
-          mapRef.current.addSource(newPediatricLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newPediatricLayerId,
-            type: "circle",
-            source: newPediatricLayerId,
-            paint: {
-              "circle-color": "#f00",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newPediatricLayerId}-label`,
-            type: "symbol",
-            source: newPediatricLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setPediatricLayer(newPediatricLayerId);
-        } else if (category === "生活>保育園") {
-          if (kindergartenLayer) {
-            if (mapRef.current.getLayer(kindergartenLayer)) {
-              mapRef.current.removeLayer(kindergartenLayer);
-              mapRef.current.removeLayer(`${kindergartenLayer}-label`);
-            }
-            if (mapRef.current.getSource(kindergartenLayer)) {
-              mapRef.current.removeSource(kindergartenLayer);
-            }
-          }
-          const newKindergartenLayerId = `kindergarten-layer`;
-          if (mapRef.current.getLayer(newKindergartenLayerId)) {
-            mapRef.current.removeLayer(newKindergartenLayerId);
-            mapRef.current.removeLayer(`${newKindergartenLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newKindergartenLayerId)) {
-            mapRef.current.removeSource(newKindergartenLayerId);
-          }
-          mapRef.current.addSource(newKindergartenLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newKindergartenLayerId,
-            type: "circle",
-            source: newKindergartenLayerId,
-            paint: {
-              "circle-color": "#ff0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newKindergartenLayerId}-label`,
-            type: "symbol",
-            source: newKindergartenLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setKindergartenLayer(newKindergartenLayerId);
-        } else if (category === "ショップ>コンビニ") {
-          if (convenienceStoreLayer) {
-            if (mapRef.current.getLayer(convenienceStoreLayer)) {
-              mapRef.current.removeLayer(convenienceStoreLayer);
-              mapRef.current.removeLayer(`${convenienceStoreLayer}-label`);
-            }
-            if (mapRef.current.getSource(convenienceStoreLayer)) {
-              mapRef.current.removeSource(convenienceStoreLayer);
-            }
-          }
-          const newConvenienceStoreLayerId = `convenience-store-layer`;
-          if (mapRef.current.getLayer(newConvenienceStoreLayerId)) {
-            mapRef.current.removeLayer(newConvenienceStoreLayerId);
-            mapRef.current.removeLayer(`${newConvenienceStoreLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newConvenienceStoreLayerId)) {
-            mapRef.current.removeSource(newConvenienceStoreLayerId);
-          }
-          mapRef.current.addSource(newConvenienceStoreLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newConvenienceStoreLayerId,
-            type: "circle",
-            source: newConvenienceStoreLayerId,
-            paint: {
-              "circle-color": "#ff0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newConvenienceStoreLayerId}-label`,
-            type: "symbol",
-            source: newConvenienceStoreLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setConvenienceStoreLayer(newConvenienceStoreLayerId);
-        } else if (category === "ショップ>スーパー") {
-          if (supermarketLayer) {
-            if (mapRef.current.getLayer(supermarketLayer)) {
-              mapRef.current.removeLayer(supermarketLayer);
-              mapRef.current.removeLayer(`${supermarketLayer}-label`);
-            }
-            if (mapRef.current.getSource(supermarketLayer)) {
-              mapRef.current.removeSource(supermarketLayer);
-            }
-          }
-          const newSupermarketLayerId = `supermarket-layer`;
-          if (mapRef.current.getLayer(newSupermarketLayerId)) {
-            mapRef.current.removeLayer(newSupermarketLayerId);
-            mapRef.current.removeLayer(`${newSupermarketLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newSupermarketLayerId)) {
-            mapRef.current.removeSource(newSupermarketLayerId);
-          }
-          mapRef.current.addSource(newSupermarketLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newSupermarketLayerId,
-            type: "circle",
-            source: newSupermarketLayerId,
-            paint: {
-              "circle-color": "#0f0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newSupermarketLayerId}-label`,
-            type: "symbol",
-            source: newSupermarketLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setSupermarketLayer(newSupermarketLayerId);
-        } else if (category === "レストラン>弁当") {
-          if (bentoLayer) {
-            if (mapRef.current.getLayer(bentoLayer)) {
-              mapRef.current.removeLayer(bentoLayer);
-              mapRef.current.removeLayer(`${bentoLayer}-label`);
-            }
-            if (mapRef.current.getSource(bentoLayer)) {
-              mapRef.current.removeSource(bentoLayer);
-            }
-          }
-          const newBentoLayerId = `bento-layer`;
-          if (mapRef.current.getLayer(newBentoLayerId)) {
-            mapRef.current.removeLayer(newBentoLayerId);
-            mapRef.current.removeLayer(`${newBentoLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newBentoLayerId)) {
-            mapRef.current.removeSource(newBentoLayerId);
-          }
-          mapRef.current.addSource(newBentoLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newBentoLayerId,
-            type: "circle",
-            source: newBentoLayerId,
-            paint: {
-              "circle-color": "#00f",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newBentoLayerId}-label`,
-            type: "symbol",
-            source: newBentoLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setBentoLayer(newBentoLayerId);
-        } else if (category === "生活>ドライクリーニング") {
-          if (dryCleaningLayer) {
-            if (mapRef.current.getLayer(dryCleaningLayer)) {
-              mapRef.current.removeLayer(dryCleaningLayer);
-              mapRef.current.removeLayer(`${dryCleaningLayer}-label`);
-            }
-            if (mapRef.current.getSource(dryCleaningLayer)) {
-              mapRef.current.removeSource(dryCleaningLayer);
-            }
-          }
-          const newDryCleaningLayerId = `dry-cleaning-layer`;
-          if (mapRef.current.getLayer(newDryCleaningLayerId)) {
-            mapRef.current.removeLayer(newDryCleaningLayerId);
-            mapRef.current.removeLayer(`${newDryCleaningLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newDryCleaningLayerId)) {
-            mapRef.current.removeSource(newDryCleaningLayerId);
-          }
-          mapRef.current.addSource(newDryCleaningLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newDryCleaningLayerId,
-            type: "circle",
-            source: newDryCleaningLayerId,
-            paint: {
-              "circle-color": "#ff0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newDryCleaningLayerId}-label`,
-            type: "symbol",
-            source: newDryCleaningLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setDryCleaningLayer(newDryCleaningLayerId);
-        } else if (category === "レジャー>スポーツジム") {
-          if (gymLayer) {
-            if (mapRef.current.getLayer(gymLayer)) {
-              mapRef.current.removeLayer(gymLayer);
-              mapRef.current.removeLayer(`${gymLayer}-label`);
-            }
-            if (mapRef.current.getSource(gymLayer)) {
-              mapRef.current.removeSource(gymLayer);
-            }
-          }
-          const newGymLayerId = `gym-layer`;
-          if (mapRef.current.getLayer(newGymLayerId)) {
-            mapRef.current.removeLayer(newGymLayerId);
-            mapRef.current.removeLayer(`${newGymLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newGymLayerId)) {
-            mapRef.current.removeSource(newGymLayerId);
-          }
-          mapRef.current.addSource(newGymLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newGymLayerId,
-            type: "circle",
-            source: newGymLayerId,
-            paint: {
-              "circle-color": "#ff0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newGymLayerId}-label`,
-            type: "symbol",
-            source: newGymLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setGymLayer(newGymLayerId);
-        } else if (category === "レジャー>公園") {
-          if (parkLayer) {
-            if (mapRef.current.getLayer(parkLayer)) {
-              mapRef.current.removeLayer(parkLayer);
-              mapRef.current.removeLayer(`${parkLayer}-label`);
-            }
-            if (mapRef.current.getSource(parkLayer)) {
-              mapRef.current.removeSource(parkLayer);
-            }
-          }
-          const newParkLayerId = `park-layer`;
-          if (mapRef.current.getLayer(newParkLayerId)) {
-            mapRef.current.removeLayer(newParkLayerId);
-            mapRef.current.removeLayer(`${newParkLayerId}-label`);
-          }
-          if (mapRef.current.getSource(newParkLayerId)) {
-            mapRef.current.removeSource(newParkLayerId);
-          }
-          mapRef.current.addSource(newParkLayerId, {
-            type: "geojson",
-            data: categoryData,
-          });
-
-          mapRef.current.addLayer({
-            id: newParkLayerId,
-            type: "circle",
-            source: newParkLayerId,
-            paint: {
-              "circle-color": "#ff0",
-              "circle-radius": 5,
-            },
-          });
-
-          // POIのポインタに名前を表示
-          mapRef.current.addLayer({
-            id: `${newParkLayerId}-label`,
-            type: "symbol",
-            source: newParkLayerId,
-            layout: {
-              "text-field": ["get", "name"],
-              "text-offset": [0, 1.5],
-              "text-anchor": "top",
-            },
-          });
-
-          setParkLayer(newParkLayerId);
+        if (mapRef.current.getLayer(layerId)) {
+          mapRef.current.removeLayer(layerId);
         }
+        if (mapRef.current.getSource(layerId)) {
+          mapRef.current.removeSource(layerId);
+        }
+
+        mapRef.current.addSource(layerId, {
+          type: "geojson",
+          data: categoryData,
+        });
+
+        mapRef.current.addLayer({
+          id: layerId,
+          type: "circle",
+          source: layerId,
+          paint: {
+            "circle-color": "#00f",
+            "circle-radius": 5,
+          },
+        });
+
+        dispatch({ type: "SET_LAYER", layerType, layerId });
       }
 
       setPoiCounts(newPoiCounts);
@@ -604,32 +213,34 @@ const Map = () => {
 
   const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
     if (!mapRef.current) return;
-    mapRef.current.on("click", e => {
-      console.log(e.lngLat.toString());
-      markerRef.current?.remove();
-      const marker = new mapboxgl.Marker()
-        .setLngLat(e.lngLat)
-        .setPopup(new mapboxgl.Popup().setText(`${e.lngLat.toString()}`))
-        .addTo(mapRef.current!);
+    console.log(e.lngLat.toString());
+    markerRef.current?.remove();
+    const marker = new mapboxgl.Marker()
+      .setLngLat(e.lngLat)
+      .setPopup(new mapboxgl.Popup().setText(`${e.lngLat.toString()}`))
+      .addTo(mapRef.current);
 
-      marker.togglePopup();
-      markerRef.current = marker;
-      setMarkerPosition([e.lngLat.lng, e.lngLat.lat]);
+    marker.togglePopup();
+    markerRef.current = marker;
+    setMarkerPosition([e.lngLat.lng, e.lngLat.lat]);
+
+    // 既存のレイヤーを削除
+    Object.keys(layerState).forEach(layerType => {
+      const layerId = layerState[layerType as keyof LayerState];
+      if (layerId) {
+        if (mapRef.current?.getLayer(layerId)) {
+          mapRef.current.removeLayer(layerId);
+        }
+        if (mapRef.current?.getSource(layerId)) {
+          mapRef.current.removeSource(layerId);
+        }
+      }
     });
+
+    dispatch({ type: "REMOVE_ALL_LAYERS" });
+
     void fetchIsochrone(e.lngLat.lng, e.lngLat.lat);
   };
-
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.on("click", handleMapClick);
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.off("click", handleMapClick);
-      }
-    };
-  }, []);
 
   const handleReset = () => {
     if (mapRef.current) {
@@ -640,89 +251,28 @@ const Map = () => {
 
       markerRef.current?.remove();
 
-      if (isochroneLayer) {
-        mapRef.current.removeLayer(isochroneLayer);
-        mapRef.current.removeSource(isochroneLayer);
-        setIsochroneLayer(null);
-      }
+      Object.keys(layerState).forEach(layerType => {
+        const layerId = layerState[layerType as keyof LayerState];
+        if (layerId) {
+          if (mapRef.current?.getLayer(layerId)) {
+            mapRef.current.removeLayer(layerId);
+          }
+          if (mapRef.current?.getSource(layerId)) {
+            mapRef.current.removeSource(layerId);
+          }
+        }
+      });
 
-      if (bboxLayer) {
-        mapRef.current.removeLayer(bboxLayer);
-        mapRef.current.removeSource(bboxLayer);
-        setBboxLayer(null);
-      }
-
-      if (coffeeLayer) {
-        mapRef.current.removeLayer(coffeeLayer);
-        mapRef.current.removeLayer(`${coffeeLayer}-label`);
-        mapRef.current.removeSource(coffeeLayer);
-        setCoffeeLayer(null);
-      }
-
-      if (pediatricLayer) {
-        mapRef.current.removeLayer(pediatricLayer);
-        mapRef.current.removeLayer(`${pediatricLayer}-label`);
-        mapRef.current.removeSource(pediatricLayer);
-        setPediatricLayer(null);
-      }
-
-      if (supermarketLayer) {
-        mapRef.current.removeLayer(supermarketLayer);
-        mapRef.current.removeLayer(`${supermarketLayer}-label`);
-        mapRef.current.removeSource(supermarketLayer);
-        setSupermarketLayer(null);
-      }
-
-      if (bentoLayer) {
-        mapRef.current.removeLayer(bentoLayer);
-        mapRef.current.removeLayer(`${bentoLayer}-label`);
-        mapRef.current.removeSource(bentoLayer);
-        setBentoLayer(null);
-      }
-
-      if (dryCleaningLayer) {
-        mapRef.current.removeLayer(dryCleaningLayer);
-        mapRef.current.removeLayer(`${dryCleaningLayer}-label`);
-        mapRef.current.removeSource(dryCleaningLayer);
-        setDryCleaningLayer(null);
-      }
-
-      if (gymLayer) {
-        mapRef.current.removeLayer(gymLayer);
-        mapRef.current.removeLayer(`${gymLayer}-label`);
-        mapRef.current.removeSource(gymLayer);
-        setGymLayer(null);
-      }
-
-      if (parkLayer) {
-        mapRef.current.removeLayer(parkLayer);
-        mapRef.current.removeLayer(`${parkLayer}-label`);
-        mapRef.current.removeSource(parkLayer);
-        setParkLayer(null);
-      }
-
-      if (kindergartenLayer) {
-        mapRef.current.removeLayer(kindergartenLayer);
-        mapRef.current.removeLayer(`${kindergartenLayer}-label`);
-        mapRef.current.removeSource(kindergartenLayer);
-        setKindergartenLayer(null);
-      }
-
-      if (convenienceStoreLayer) {
-        mapRef.current.removeLayer(convenienceStoreLayer);
-        mapRef.current.removeLayer(`${convenienceStoreLayer}-label`);
-        mapRef.current.removeSource(convenienceStoreLayer);
-        setConvenienceStoreLayer(null);
-      }
+      dispatch({ type: "REMOVE_ALL_LAYERS" });
     }
   };
 
   useEffect(() => {
-    console.log(isochroneLayer);
-  }, [isochroneLayer]);
+    console.log(layerState.isochroneLayer);
+  }, [layerState.isochroneLayer]);
 
   useEffect(() => {
-    if (markerPosition && isochroneLayer) {
+    if (markerPosition && layerState.isochroneLayer) {
       void fetchIsochrone(markerPosition[0], markerPosition[1]);
     }
   }, [walkTime]);
@@ -760,20 +310,6 @@ const Map = () => {
       <button className="btn btn-ghost" onClick={handleReset}>
         Reset
       </button>
-      <div className="mt-4">
-        <h2>カテゴリーの説明</h2>
-        <ul>
-          <li>ショップ&gt;スーパー: スーパー</li>
-          <li>レストラン&gt;弁当: 弁当屋</li>
-          <li>ショップ&gt;コンビニ: コンビニエンスストア</li>
-          <li>レストラン&gt;カフェ: カフェ</li>
-          <li>医療&gt;小児科: 小児科</li>
-          <li>生活&gt;保育園: 保育園</li>
-          <li>生活&gt;ドライクリーニング: ドライクリーニング店</li>
-          <li>レジャー&gt;スポーツジム: スポーツジム</li>
-          <li>レジャー&gt;公園: 公園</li>
-        </ul>
-      </div>
     </>
   );
 };
